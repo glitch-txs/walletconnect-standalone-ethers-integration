@@ -25,8 +25,6 @@ export default function HomePage() {
   // 3. Initialize sign client
   async function onInitializeSignClient() {
     
-    window.localStorage.clear()
-
     const provider = await UniversalProvider.init({
       projectId: process.env.NEXT_PUBLIC_PROJECT_ID,
       metadata: {
@@ -35,35 +33,45 @@ export default function HomePage() {
         url: "mywebsite.com",
         icons: ["https://lh3.googleusercontent.com/ogw/AOh-ky0c2alK5GAwefGWkwQHVpcJR637KRzHSZx9dV31rg=s32-c-mo"],
       },
-    });
+    }).catch( e=> console.log("initialization failed - reload dapp") );
 
-    provider.on("display_uri", async (uri: any) => {
+    provider?.on("display_uri", async (uri: any) => {
       web3Modal?.openModal({ uri });
     });
 
-    provider.on("session_ping", (e: any) => {
+    provider?.on("session_ping", (e: any) => {
       console.log("session_ping",e);
     });
     
-    provider.on("session_event", (e: any) => {
+    provider?.on("session_event", (e: any) => {
       console.log("session_event",e);
     });
 
-    provider.on("session_request", (event: any) => {
+    provider?.on("session_request", (event: any) => {
       // Handle session method requests, such as "eth_sign", "eth_sendTransaction", etc.
     
       console.log(event)
     });
 
-    provider.on("session_update", (e: any) => {
+    provider?.on("session_update", (e: any) => {
       console.log("session_update",e);
     });
 
-    provider.on("session_delete", () => {
+    provider?.on("session_delete", () => {
       console.log("session ended");
     });
     
     setChildProvider(provider)
+
+    if(provider?.session){
+      const web3Provider = new ethers.providers.Web3Provider(provider);
+      setParentProvider(web3Provider)
+  
+      const signer = web3Provider.getSigner()
+      const address = await signer.getAddress()
+      const chainId = await signer.getChainId()
+       console.log(address, chainId)
+    }
 
     console.log('loaded, done')
   }
