@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react'
 //I commented the project Id here, this will prevent desktop wallets to show up on modal. (optional)
 const web3Modal = new Web3Modal({ 
   // projectId: process.env.NEXT_PUBLIC_PROJECT_ID 
+  standaloneChains: ["eip155:1", "eip155:137"]
 })
 
 web3Modal.setTheme({
@@ -60,6 +61,7 @@ export default function HomePage() {
     provider?.on("session_delete", () => {
       console.log("session ended");
     });
+          
     
     setChildProvider(provider)
 
@@ -89,14 +91,18 @@ export default function HomePage() {
             "personal_sign",
             "eth_signTypedData",
           ],
-          chains: ["eip155:56"],
+          chains: ["eip155:1", "eip155:137"],
           events: ["chainChanged", "accountsChanged"],
           rpcMap: {
-            56: 'https://bsc-dataseed1.binance.org/',
+            1:'https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
+            137: 'https://rpc.ankr.com/polygon',
           },
         },
       },
     }).then((e: any)=> console.log(e)).catch((e: any)=> console.log(e))
+
+    // choose chain id to trigger the function to
+    childProvider?.setDefaultChain("eip155:137")
 
     web3Modal?.closeModal();
         
@@ -117,11 +123,12 @@ export default function HomePage() {
 
   const disconnect = ()=>{
     childProvider?.disconnect()
+    window.localStorage.clear()
   }
 
   const interact = async()=>{
 
-    const contractAddress = '0x2170Ed0880ac9A755fd29B2688956BD959F933F8'
+    const contractAddress = '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174'
 
     const ERC20Abi = [
       "function name() view returns (string)",
@@ -133,8 +140,10 @@ export default function HomePage() {
 
     const name = await erc20Contract.name().catch((e: any)=> {
       if(e.code == 5000) console.log('user rejected transaction')
-      console.log(e)
+      console.error(e)
     })
+
+    console.log(name)
 
     setTokenName(name)
 
@@ -144,6 +153,7 @@ export default function HomePage() {
     <>
     <button onClick={onOpenModal}>Connect Wallet</button>
     <button onClick={disconnect}>Bye Wallet</button>
+    {tokenName}
     <button onClick={interact}>{ tokenName ? tokenName : 'call contract :3' }</button>
     </>
   )
